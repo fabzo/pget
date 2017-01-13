@@ -65,3 +65,7 @@ type UploadResponse struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 }
+
+type DeleteResponse struct {
+	Status string `json:"status"`
+}

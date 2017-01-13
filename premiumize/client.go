@@ -17,6 +17,7 @@ import (
 const listTorrentsURL = "https://www.premiumize.me/api/transfer/list"
 const browseTorrentURL = "https://www.premiumize.me/api/torrent/browse"
 const startTorrentURL = "https://www.premiumize.me/api/transfer/create"
+const deleteTorrentURL = "https://www.premiumize.me/api/transfer/delete"
 const premiumizeErrorStatus = "error"
 
 type Client struct {
@@ -58,7 +59,7 @@ func (c *Client) ListTorrents() (TorrentList, error) {
 	}
 
 	if c.debug {
-		fmt.Printf("DEBUG ENABLED. DUMPING UPLOAD RESPONSE:\n%s\n", content)
+		fmt.Printf("DEBUG ENABLED. DUMPING LIST RESPONSE:\n%s\n", content)
 	}
 
 	list := TorrentList{}
@@ -110,7 +111,7 @@ func (c *Client) BrowseTorrent(hash string) (Torrent, error) {
 	}
 
 	if c.debug {
-		fmt.Printf("DEBUG ENABLED. DUMPING UPLOAD RESPONSE:\n%s\n", content)
+		fmt.Printf("DEBUG ENABLED. DUMPING BROWSE RESPONSE:\n%s\n", content)
 	}
 
 	torrent := Torrent{}
@@ -120,6 +121,37 @@ func (c *Client) BrowseTorrent(hash string) (Torrent, error) {
 	}
 
 	return torrent, nil
+}
+
+func (c *Client) DeleteTorrent(id string) (DeleteResponse, error) {
+	form := url.Values{}
+	form.Set("customer_id", c.customerID)
+	form.Set("pin", c.pin)
+	form.Set("type", "torrent")
+	form.Set("id", id)
+
+	resp, err := c.http.PostForm(deleteTorrentURL, form)
+	if err != nil {
+		return DeleteResponse{}, err
+	}
+	defer resp.Body.Close()
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return DeleteResponse{}, err
+	}
+
+	if c.debug {
+		fmt.Printf("DEBUG ENABLED. DUMPING DELETE RESPONSE:\n%s\n", content)
+	}
+
+	response := DeleteResponse{}
+	err = json.Unmarshal(content, &response)
+	if err != nil {
+		return DeleteResponse{}, err
+	}
+
+	return response, nil
 }
 
 func (c *Client) UploadTorrentFile(path string) (UploadResponse, error) {

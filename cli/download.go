@@ -29,7 +29,7 @@ func (a DownloadTaskSorter) Less(i, j int) bool {
 	return strings.Compare(a[i].Destination, a[j].Destination) < 0
 }
 
-func (c *Cli) DownloadTorrent(name string, targetDirectory string, videoOnly bool, flatten bool, stopAfter string) {
+func (c *Cli) DownloadTorrent(name string, targetDirectory string, videoOnly bool, flatten bool, stopAfter string) (string, error) {
 	var bytes uint64 = 0
 	if stopAfter != "" {
 		var err error
@@ -42,21 +42,21 @@ func (c *Cli) DownloadTorrent(name string, targetDirectory string, videoOnly boo
 	torrentInfo, err := c.premiumize.FindTorrentByName(name)
 	if err != nil {
 		fmt.Println(err.Error())
-		return
+		return "", err
 	}
 
 	torrent, err := c.premiumize.BrowseTorrent(torrentInfo.Hash)
 
 	if err != nil {
 		fmt.Println(err.Error())
-		return
+		return "", err
 	}
 
 	tasks := createDownloadList(targetDirectory, torrent.Content, videoOnly, flatten)
-	download(tasks, bytes)
+	return torrentInfo.ID, download(tasks, bytes)
 }
 
-func download(tasks []DownloadTask, stopAfterBytes uint64) {
+func download(tasks []DownloadTask, stopAfterBytes uint64) error {
 	sort.Sort(DownloadTaskSorter(tasks))
 
 	var totalBytes uint64
@@ -66,13 +66,14 @@ func download(tasks []DownloadTask, stopAfterBytes uint64) {
 				totalBytes += task.Size
 				if totalBytes > stopAfterBytes {
 					fmt.Printf("Stopping download. Reached %s. The next download would overstep the %s limit.", humanize.Bytes(totalBytes-task.Size), humanize.Bytes(stopAfterBytes))
-					return
+					return nil
 				}
 			}
 		}
 
-		downloadTask(task)
+		return downloadTask(task)
 	}
+	return nil
 }
 
 func createDownloadList(root string, torrent map[string]premiumize.TorrentContent, videoOnly bool, flatten bool) []DownloadTask {
@@ -116,11 +117,11 @@ func toDownloadTask(root string, torrentFile premiumize.TorrentContent, flatten 
 	}
 }
 
-func downloadTask(task DownloadTask) {
+func downloadTask(task DownloadTask) error {
 	respCh, err := grab.GetAsync(task.Destination, task.URL)
 	if err != nil {
 		fmt.Printf("Error downloading %s: %s\n", task.Destination, err.Error())
-		return
+		return err
 	}
 
 	resp := <-respCh
@@ -132,7 +133,8 @@ func downloadTask(task DownloadTask) {
 	fmt.Printf("\033[1A\033[K")
 	if resp.Error != nil {
 		fmt.Printf("   Error downloading %s: %v\n", task.URL, resp.Error)
-		return
+		return err
 	}
 	fmt.Printf("   %s [%s]\n", task.Destination, humanize.Bytes(resp.Size))
+	return nil
 }

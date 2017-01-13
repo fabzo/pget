@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/fsnotify/fsnotify"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"pget/premiumize"
 	"pget/watcher"
 	"strings"
 	"time"
-	"io/ioutil"
 )
 
 const premiumizeFinishedStatus = "finished"
@@ -136,7 +137,7 @@ func extractLocation(basePath string, filePath string) string {
 	return ""
 }
 
-func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten bool, strict bool) {
+func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten bool, strict bool, deleteDownloaded bool, createSyncFile bool) {
 	if strict {
 		if err := c.openBoltDB(); err != nil {
 			fmt.Printf("Unable to open database for upload/download tracking: %s\n", err.Error())
@@ -147,6 +148,10 @@ func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten b
 	done := make(chan bool)
 	go func() {
 		for {
+			if createSyncFile {
+				c.createSyncFile(targetDirectory)
+			}
+
 			torrents, err := c.premiumize.ListTorrents()
 			if err != nil {
 				fmt.Printf("Could not retrieve list of torrents: %s\n", err.Error())
@@ -156,15 +161,36 @@ func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten b
 					hasBeenUploaded := c.hasBeenUploadedWhenStrict(strict, transfer)
 
 					if isFinished && hasBeenUploaded {
-						c.DownloadTorrent(transfer.Name, targetDirectory, videoOnly, flatten, "")
+						id, err := c.DownloadTorrent(transfer.Name, targetDirectory, videoOnly, flatten, "")
+						if deleteDownloaded && err == nil {
+							c.premiumize.DeleteTorrent(id)
+						}
 					}
 				}
+			}
+			if createSyncFile {
+				c.deleteSyncFile(targetDirectory)
 			}
 			time.Sleep(torrentListCheckInterval)
 		}
 	}()
 
 	<-done
+}
+
+func (c *Cli) createSyncFile(directory string) {
+	file, err := os.OpenFile(path.Join(directory, ".sync"), os.O_RDONLY|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Printf("Could not create sync file: %v", err)
+	}
+	file.Close()
+}
+
+func (c *Cli) deleteSyncFile(directory string) {
+	err := os.Remove(path.Join(directory, ".sync"))
+	if err != nil {
+		fmt.Printf("Could not delete sync file: %v", err)
+	}
 }
 
 func (c *Cli) isTorrentFinished(status string) bool {

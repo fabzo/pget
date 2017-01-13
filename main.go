@@ -52,12 +52,14 @@ func main() {
 	watchCommand := application.Command("watch", "Watch for local or remote files to upload/download")
 
 	watchUploadFlag := watchCommand.Flag("upload", "Directory to watch for new torrent files to upload").Default("-").String()
-	watchDeleteFlag := watchCommand.Flag("delete", "Delete torrent file after upload").Bool()
+	watchDeleteUploadedFlag := watchCommand.Flag("delete-uploaded", "Delete torrent file after upload").Bool()
 
 	watchDownloadFlag := watchCommand.Flag("download", "Directory to which torrents are downloaded").Default("-").String()
 	watchStrictDownloadFlag := watchCommand.Flag("strict", "Only download torrents that have also been uploaded by this tool").Bool()
 	watchVideoOnlyFlag := watchCommand.Flag("video-only", "Only download video files (also ignores samples)").Short('v').Bool()
 	watchFlattenFlag := watchCommand.Flag("flatten", "Ignore directories").Short('f').Bool()
+	watchDeleteDownloadedFlag := watchCommand.Flag("delete-downloaded", "Delete remote after downloaded").Bool()
+	watchSyncFileFlag := watchCommand.Flag("--sync-file", "Create .sync file in folder when downloading").Bool()
 
 	cli := cli.New(premiumizeClient)
 
@@ -87,7 +89,7 @@ func main() {
 		if *watchUploadFlag != "-" {
 			wg.Add(1)
 			go func() {
-				cli.WatchAndUpload(*watchUploadFlag, *watchStrictDownloadFlag, *watchDeleteFlag)
+				cli.WatchAndUpload(*watchUploadFlag, *watchStrictDownloadFlag, *watchDeleteUploadedFlag)
 				wg.Done()
 			}()
 		}
@@ -95,7 +97,7 @@ func main() {
 		if *watchDownloadFlag != "-" {
 			wg.Add(1)
 			go func() {
-				cli.WatchAndDownload(*watchDownloadFlag, *watchVideoOnlyFlag, *watchFlattenFlag, *watchStrictDownloadFlag)
+				cli.WatchAndDownload(*watchDownloadFlag, *watchVideoOnlyFlag, *watchFlattenFlag, *watchStrictDownloadFlag, *watchDeleteDownloadedFlag, *watchSyncFileFlag)
 				wg.Done()
 			}()
 		}
