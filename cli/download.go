@@ -66,7 +66,7 @@ func download(tasks []DownloadTask, stopAfterBytes uint64) error {
 				totalBytes += task.Size
 				if totalBytes > stopAfterBytes {
 					fmt.Printf("Stopping download. Reached %s. The next download would overstep the %s limit.", humanize.Bytes(totalBytes-task.Size), humanize.Bytes(stopAfterBytes))
-					return nil
+					return err
 				}
 			}
 		}
@@ -118,6 +118,11 @@ func toDownloadTask(root string, torrentFile premiumize.TorrentContent, flatten 
 }
 
 func downloadTask(task DownloadTask) error {
+	err := os.MkdirAll(task.Destination, 0770)
+	if err != nil {
+		fmt.Printf("Unable to create directory where download should be: %v", err)
+	}
+
 	respCh, err := grab.GetAsync(task.Destination, task.URL)
 	if err != nil {
 		fmt.Printf("Error downloading %s: %s\n", task.Destination, err.Error())

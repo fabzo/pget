@@ -178,7 +178,15 @@ func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten b
 	<-done
 }
 
+func (c *Cli) mkdir(path string) {
+	os.MkdirAll(path, 0770)
+}
+
 func (c *Cli) createSyncFile(directory string) {
+	err := os.MkdirAll(directory, 0770)
+	if err != nil {
+		fmt.Printf("Unable to create directory where .sync file should be: %v", err)
+	}
 	file, err := os.OpenFile(path.Join(directory, ".sync"), os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Printf("Could not create sync file: %v", err)
