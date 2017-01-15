@@ -59,7 +59,7 @@ func main() {
 	watchVideoOnlyFlag := watchCommand.Flag("video-only", "Only download video files (also ignores samples)").Short('v').Bool()
 	watchFlattenFlag := watchCommand.Flag("flatten", "Ignore directories").Short('f').Bool()
 	watchDeleteDownloadedFlag := watchCommand.Flag("delete-downloaded", "Delete remote after downloaded").Bool()
-	watchSyncFileFlag := watchCommand.Flag("--sync-file", "Create .sync file in folder when downloading").Bool()
+	watchSyncFileFlag := watchCommand.Flag("sync-file", "Create .sync file in folder when downloading").Bool()
 
 	cli := cli.New(premiumizeClient)
 
