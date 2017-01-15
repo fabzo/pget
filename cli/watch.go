@@ -15,7 +15,6 @@ import (
 )
 
 const premiumizeFinishedStatus = "finished"
-const torrentListCheckInterval = 10 * time.Minute
 const boltDBFile = "pget.db"
 const torrentsBucket = "torrents"
 
@@ -137,7 +136,7 @@ func extractLocation(basePath string, filePath string) string {
 	return ""
 }
 
-func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten bool, strict bool, deleteDownloaded bool, createSyncFile bool) {
+func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten bool, strict bool, deleteDownloaded bool, createSyncFile bool, delay int) {
 	if strict {
 		if err := c.openBoltDB(); err != nil {
 			fmt.Printf("Unable to open database for upload/download tracking: %s\n", err.Error())
@@ -171,7 +170,7 @@ func (c *Cli) WatchAndDownload(targetDirectory string, videoOnly bool, flatten b
 			if createSyncFile {
 				c.deleteSyncFile(targetDirectory)
 			}
-			time.Sleep(torrentListCheckInterval)
+			time.Sleep(time.Duration(delay) * time.Minute)
 		}
 	}()
 

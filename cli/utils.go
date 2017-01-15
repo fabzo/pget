@@ -36,7 +36,7 @@ var knownVideoFileExtensions = []string{
 }
 
 var videoFileBlacklist = []string{
-	"sample",
+	"sample", "RAGB",
 }
 
 func isKnownVideoFileExtension(extension string) bool {

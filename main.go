@@ -60,6 +60,7 @@ func main() {
 	watchFlattenFlag := watchCommand.Flag("flatten", "Ignore directories").Short('f').Bool()
 	watchDeleteDownloadedFlag := watchCommand.Flag("delete-downloaded", "Delete remote after downloaded").Bool()
 	watchSyncFileFlag := watchCommand.Flag("sync-file", "Create .sync file in folder when downloading").Bool()
+	watchDownloadDelayFlag := watchCommand.Flag("delay", "Delay between download cycles (in minutes)").Int()
 
 	cli := cli.New(premiumizeClient)
 
@@ -97,7 +98,19 @@ func main() {
 		if *watchDownloadFlag != "-" {
 			wg.Add(1)
 			go func() {
-				cli.WatchAndDownload(*watchDownloadFlag, *watchVideoOnlyFlag, *watchFlattenFlag, *watchStrictDownloadFlag, *watchDeleteDownloadedFlag, *watchSyncFileFlag)
+				if *watchDownloadDelayFlag < 10 {
+					*watchDownloadDelayFlag = 10
+				}
+
+				cli.WatchAndDownload(
+					*watchDownloadFlag,
+					*watchVideoOnlyFlag,
+					*watchFlattenFlag,
+					*watchStrictDownloadFlag,
+					*watchDeleteDownloadedFlag,
+					*watchSyncFileFlag,
+					*watchDownloadDelayFlag,
+				)
 				wg.Done()
 			}()
 		}
