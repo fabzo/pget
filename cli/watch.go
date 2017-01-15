@@ -15,7 +15,7 @@ import (
 )
 
 const premiumizeFinishedStatus = "finished"
-const torrentListCheckInterval = 60 * time.Second
+const torrentListCheckInterval = 10 * time.Minute
 const boltDBFile = "pget.db"
 const torrentsBucket = "torrents"
 
