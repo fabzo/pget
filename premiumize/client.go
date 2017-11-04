@@ -217,7 +217,7 @@ func (c *Client) UploadMagnetLink(link string) (UploadResponse, error) {
 	form.Set("type", "torrent")
 	form.Set("src", link)
 
-	resp, err := c.http.PostForm(browseTorrentURL, form)
+	resp, err := c.http.PostForm(startTorrentURL, form)
 	if err != nil {
 		return UploadResponse{}, err
 	}
